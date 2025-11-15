@@ -1,11 +1,6 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-export interface AuthContextType {
-  isAuthenticated: boolean;
-  login: (email: string) => void;
-  logout: () => void;
-}
-export const AuthContext = createContext<AuthContextType | null>(null);
+import { AuthContext, AuthContextType } from './AuthContext';
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     // Safely check for localStorage availability
@@ -33,16 +28,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Navigate to login page after logout to prevent being stuck on a protected page
     navigate('/admin/login');
   };
+  const authContextValue: AuthContextType = { isAuthenticated, login, logout };
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={authContextValue}>
       {children}
     </AuthContext.Provider>
   );
-};
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 };
