@@ -77,13 +77,7 @@ function updateWranglerJsonc() {
 }
 
 function runSetupCommands() {
-    const commands = [
-    "bun add @tiptap/react@^2.4.0",
-    "bun add @tiptap/pm@^2.4.0",
-    "bun add @tiptap/starter-kit@^2.4.0",
-    "bun add @tiptap/extension-link@^2.4.0",
-    "bun add @tiptap/extension-image@^2.4.0"
-];
+    const commands = [];
     
     if (commands.length === 0) {
         console.log('⊘ No setup commands to run');
