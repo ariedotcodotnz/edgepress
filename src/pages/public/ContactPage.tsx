@@ -4,7 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import type { StaticPage } from '@shared/types';
+import type { StaticPage, PRContact } from '@shared/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,9 +18,13 @@ const contactFormSchema = z.object({
 });
 type ContactFormData = z.infer<typeof contactFormSchema>;
 export function ContactPage() {
-  const { data: page, isLoading, error } = useQuery<StaticPage>({
+  const { data: page, isLoading: isLoadingPage } = useQuery<StaticPage>({
     queryKey: ['staticPage', 'contact'],
     queryFn: () => api('/api/pages/contact'),
+  });
+  const { data: contacts, isLoading: isLoadingContacts } = useQuery<PRContact[]>({
+    queryKey: ['prContacts'],
+    queryFn: () => api('/api/pr-contacts'),
   });
   const { register, handleSubmit, formState: { errors }, reset } = useForm<ContactFormData>({
     resolver: zodResolver(contactFormSchema),
@@ -39,27 +43,38 @@ export function ContactPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-16 md:py-24">
-        {isLoading ? <Skeleton className="h-12 w-1/2 mx-auto" /> :
+        {isLoadingPage ? <Skeleton className="h-12 w-1/2 mx-auto" /> :
           <h1 className="text-4xl md:text-6xl font-bold font-mono uppercase tracking-wider text-center">
             {page?.title || 'Contact Us'}
           </h1>
         }
         <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-16">
           <div className="border-2 border-foreground p-8 shadow-hard-md">
-            {isLoading ? (
+            {isLoadingPage ? (
               <div className="space-y-4">
                 <Skeleton className="h-8 w-1/2" />
                 <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-20 w-full" />
               </div>
-            ) : error || !page ? (
-              <p className="text-destructive">Failed to load contact information.</p>
             ) : (
-              <div
+              page && <div
                 className="prose prose-lg max-w-none prose-headings:font-mono prose-headings:font-bold"
                 dangerouslySetInnerHTML={{ __html: page.content }}
               />
             )}
+            <div className="mt-8 space-y-6">
+              {isLoadingContacts ? (
+                <Skeleton className="h-24 w-full" />
+              ) : (
+                contacts?.map(contact => (
+                  <div key={contact.id}>
+                    <p className="font-bold text-lg">{contact.name}</p>
+                    <p className="text-muted-foreground">{contact.title}</p>
+                    <p><a href={`mailto:${contact.email}`} className="hover:underline">{contact.email}</a></p>
+                    {contact.phone && <p>{contact.phone}</p>}
+                  </div>
+                ))
+              )}
+            </div>
           </div>
           <div>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

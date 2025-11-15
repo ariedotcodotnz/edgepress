@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Edit } from "lucide-react"
+import { Edit, Settings } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { api } from "@/lib/api-client"
 import type { StaticPage } from "@shared/types"
@@ -26,6 +26,11 @@ export function StaticPagesPage() {
     queryKey: ['staticPages'],
     queryFn: () => api('/api/pages'),
   });
+  const pageConfigs = {
+    about: { path: '/admin/media/pages/about/edit', label: 'Edit', icon: <Edit className="h-4 w-4" /> },
+    assets: { path: '/admin/media/pages/assets/manage', label: 'Manage', icon: <Settings className="h-4 w-4" /> },
+    contact: { path: '/admin/media/pages/contact/manage', label: 'Manage', icon: <Settings className="h-4 w-4" /> },
+  };
   return (
     <>
       <div className="flex items-center">
@@ -60,19 +65,23 @@ export function StaticPagesPage() {
                     Failed to load pages.
                   </TableCell>
                 </TableRow>
-              ) : pages?.map(page => (
-                <TableRow key={page.id}>
-                  <TableCell className="font-medium">{page.title}</TableCell>
-                  <TableCell>{format(new Date(page.updatedAt), 'MMM dd, yyyy')}</TableCell>
-                  <TableCell className="text-right">
-                    <Button asChild size="icon" variant="outline">
-                      <Link to={`/admin/media/pages/${page.id}/edit`}>
-                        <Edit className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              ) : pages?.map(page => {
+                const config = pageConfigs[page.id as keyof typeof pageConfigs] || pageConfigs.about;
+                return (
+                  <TableRow key={page.id}>
+                    <TableCell className="font-medium">{page.title}</TableCell>
+                    <TableCell>{format(new Date(page.updatedAt), 'MMM dd, yyyy')}</TableCell>
+                    <TableCell className="text-right">
+                      <Button asChild size="sm" variant="outline" className="gap-1">
+                        <Link to={config.path}>
+                          {config.icon}
+                          {config.label}
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         </CardContent>

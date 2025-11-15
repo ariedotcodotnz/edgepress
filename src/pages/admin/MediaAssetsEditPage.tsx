@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -107,7 +107,7 @@ export function MediaAssetsEditPage() {
               <div className="grid gap-2"><Label htmlFor="label">Label</Label><Input id="label" {...register('label')} />{errors.label && <p className="text-sm text-destructive">{errors.label.message}</p>}</div>
               <div className="grid gap-2"><Label htmlFor="url">URL</Label><Input id="url" {...register('url')} placeholder="https://..." />{errors.url && <p className="text-sm text-destructive">{errors.url.message}</p>}</div>
               <div className="grid gap-2"><Label>Category</Label>
-                <Controller
+                <z.Controller
                   name="category"
                   control={control}
                   render={({ field }) => (

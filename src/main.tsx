@@ -13,7 +13,7 @@ import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import '@/index.css'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Auth
-import { AuthProvider } from '@/auth/AuthProvider'; // This now correctly points to the consolidated file
+import { AuthProvider } from '@/auth/AuthProvider';
 import { ProtectedRoute } from '@/auth/ProtectedRoute';
 // Layouts
 import { PublicLayout } from '@/components/layout/PublicLayout';
@@ -33,6 +33,8 @@ import { StaticPagesPage } from '@/pages/admin/StaticPagesPage';
 import { StaticPageEditPage } from '@/pages/admin/StaticPageEditPage';
 import { AnalyticsPage } from '@/pages/admin/AnalyticsPage';
 import { UsersPage } from '@/pages/admin/UsersPage';
+import { MediaAssetsEditPage } from '@/pages/admin/MediaAssetsEditPage';
+import { ContactsEditPage } from '@/pages/admin/ContactsEditPage';
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
@@ -71,7 +73,9 @@ const router = createBrowserRouter([
                   { path: "press-releases/new", element: <PressReleaseEditPage /> },
                   { path: "press-releases/:id/edit", element: <PressReleaseEditPage /> },
                   { path: "pages", element: <StaticPagesPage /> },
-                  { path: "pages/:id/edit", element: <StaticPageEditPage /> },
+                  { path: "pages/about/edit", element: <StaticPageEditPage /> },
+                  { path: "pages/assets/manage", element: <MediaAssetsEditPage /> },
+                  { path: "pages/contact/manage", element: <ContactsEditPage /> },
                   { path: "analytics", element: <AnalyticsPage /> },
                   { path: "users", element: <UsersPage /> },
                 ]

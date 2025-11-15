@@ -9,7 +9,7 @@ import { z } from "zod"
 import { useParams, useNavigate } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api-client"
-import type { PressRelease } from "@shared/types"
+import type { PressRelease, PRContact } from "@shared/types"
 import { toast } from "sonner"
 import TiptapEditor from "@/components/admin/TiptapEditor"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -28,6 +28,7 @@ const pressReleaseSchema = z.object({
   content: z.string().min(1, "Content is required"),
   status: z.enum(["Draft", "Published", "Scheduled"]),
   publishAt: z.date(),
+  contactId: z.string().min(1, "A contact must be selected"),
 });
 type PressReleaseFormData = z.infer<typeof pressReleaseSchema>;
 interface GeneratedEmail {
@@ -46,6 +47,10 @@ export function PressReleaseEditPage() {
     queryFn: () => api(`/api/press-releases/${id}`),
     enabled: isEditing,
   });
+  const { data: contacts, isLoading: isLoadingContacts } = useQuery<PRContact[]>({
+    queryKey: ['prContacts'],
+    queryFn: () => api('/api/pr-contacts'),
+  });
   const { control, register, handleSubmit, formState: { errors }, setValue, watch } = useForm<PressReleaseFormData>({
     resolver: zodResolver(pressReleaseSchema),
     defaultValues: {
@@ -55,15 +60,18 @@ export function PressReleaseEditPage() {
       content: '',
       status: 'Draft',
       publishAt: new Date(),
+      contactId: '',
     },
     values: release ? {
       ...release,
       publishAt: new Date(release.publishAt),
+      contactId: release.contact.id,
     } : undefined,
   });
   const mutation = useMutation({
     mutationFn: (data: PressReleaseFormData) => {
-      const payload = { ...data, publishAt: data.publishAt.toISOString() };
+      const selectedContact = contacts?.find(c => c.id === data.contactId);
+      const payload = { ...data, publishAt: data.publishAt.toISOString(), contact: selectedContact };
       return isEditing ? api(`/api/press-releases/${id}`, { method: 'PUT', body: JSON.stringify(payload) }) : api('/api/press-releases', { method: 'POST', body: JSON.stringify(payload) });
     },
     onSuccess: () => {
@@ -198,6 +206,26 @@ export function PressReleaseEditPage() {
                         </Popover>
                       )}
                     />
+                  </div>
+                  <div>
+                    <Label>PR Contact</Label>
+                    <Controller
+                      name="contactId"
+                      control={control}
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingContacts}>
+                          <SelectTrigger>
+                            <SelectValue placeholder={isLoadingContacts ? "Loading..." : "Select contact"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {contacts?.map(contact => (
+                              <SelectItem key={contact.id} value={contact.id}>{contact.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {errors.contactId && <p className="text-sm text-destructive mt-1">{errors.contactId.message}</p>}
                   </div>
                 </CardContent>
               </Card>
