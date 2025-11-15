@@ -4,7 +4,7 @@
  */
  {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "edgepress-media-cent-gj9vtighffphrh_jsg80_",
+	"name": "edgepresspro",
 	"main": "worker/index.ts",
 	"compatibility_date": "2025-04-24",
 	"assets": {
