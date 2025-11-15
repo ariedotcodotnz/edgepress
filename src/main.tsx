@@ -36,6 +36,7 @@ import { UsersPage } from '@/pages/admin/UsersPage';
 import { MediaAssetsEditPage } from '@/pages/admin/MediaAssetsEditPage';
 import { ContactsEditPage } from '@/pages/admin/ContactsEditPage';
 import { ContactSubmissionsPage } from '@/pages/admin/ContactSubmissionsPage';
+import { CategoriesPage } from '@/pages/admin/CategoriesPage';
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
@@ -77,6 +78,7 @@ const router = createBrowserRouter([
                   { path: "pages/about/edit", element: <StaticPageEditPage /> },
                   { path: "pages/assets/manage", element: <MediaAssetsEditPage /> },
                   { path: "pages/contact/manage", element: <ContactsEditPage /> },
+                  { path: "categories", element: <CategoriesPage /> },
                   { path: "analytics", element: <AnalyticsPage /> },
                   { path: "users", element: <UsersPage /> },
                   { path: "submissions", element: <ContactSubmissionsPage /> },

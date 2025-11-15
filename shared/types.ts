@@ -27,6 +27,10 @@ export interface StaticPage {
   content: string; // Rich text / HTML
   updatedAt: string;
 }
+export interface MediaAssetCategory {
+  id: string;
+  name: string;
+}
 export interface MediaAsset {
   id: string;
   url: string;
@@ -35,7 +39,8 @@ export interface MediaAsset {
   size: number; // in bytes
   label: string;
   description?: string;
-  category: 'logo' | 'product' | 'executive' | 'other';
+  categoryId: string;
+  categoryName?: string; // Joined for convenience
 }
 export interface AdminUser {
   id: string;

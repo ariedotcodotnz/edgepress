@@ -1,5 +1,5 @@
 import { IndexedEntity } from "./core-utils";
-import type { PressRelease, AdminUser, PRContact, StaticPage, ContactSubmission, AnalyticsEvent, MediaAsset } from "@shared/types";
+import type { PressRelease, AdminUser, PRContact, StaticPage, ContactSubmission, AnalyticsEvent, MediaAsset, MediaAssetCategory } from "@shared/types";
 import { formatISO } from "date-fns";
 // PRESS RELEASE ENTITY
 export class PressReleaseEntity extends IndexedEntity<PressRelease> {
@@ -99,6 +99,19 @@ export class AnalyticsEventEntity extends IndexedEntity<AnalyticsEvent> {
         timestamp: formatISO(new Date()),
     };
 }
+// MEDIA ASSET CATEGORY ENTITY
+const SEED_CATEGORIES: MediaAssetCategory[] = [
+    { id: 'cat-1', name: 'Logos' },
+    { id: 'cat-2', name: 'Product Images' },
+    { id: 'cat-3', name: 'Executive Photos' },
+    { id: 'cat-4', name: 'Other' },
+];
+export class MediaAssetCategoryEntity extends IndexedEntity<MediaAssetCategory> {
+    static readonly entityName = "mediaAssetCategory";
+    static readonly indexName = "mediaAssetCategories";
+    static readonly initialState: MediaAssetCategory = { id: "", name: "" };
+    static seedData = SEED_CATEGORIES;
+}
 // MEDIA ASSET ENTITY
 export class MediaAssetEntity extends IndexedEntity<MediaAsset> {
     static readonly entityName = "mediaAsset";
@@ -110,6 +123,6 @@ export class MediaAssetEntity extends IndexedEntity<MediaAsset> {
         fileType: "",
         size: 0,
         label: "",
-        category: 'other',
+        categoryId: "",
     };
 }

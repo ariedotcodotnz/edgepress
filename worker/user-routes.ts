@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
-import { PressReleaseEntity, StaticPageEntity, AdminUserEntity, ContactSubmissionEntity, AnalyticsEventEntity, PRContactEntity, MediaAssetEntity } from "./entities";
+import { PressReleaseEntity, StaticPageEntity, AdminUserEntity, ContactSubmissionEntity, AnalyticsEventEntity, PRContactEntity, MediaAssetEntity, MediaAssetCategoryEntity } from "./entities";
 import { ok, bad, notFound } from './core-utils';
-import type { PressRelease, StaticPage, AdminUser, ContactSubmission, AnalyticsEvent, AnalyticsSummary, PressReleaseWithViews, PRContact, MediaAsset, PressReleaseAnalyticsData } from "@shared/types";
+import type { PressRelease, StaticPage, AdminUser, ContactSubmission, AnalyticsEvent, AnalyticsSummary, PressReleaseWithViews, PRContact, MediaAsset, PressReleaseAnalyticsData, MediaAssetCategory } from "@shared/types";
 import { formatISO, subDays, eachDayOfInterval, format } from "date-fns";
 import { analyticsMiddleware } from "./middleware";
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
@@ -197,14 +197,46 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const deleted = await PRContactEntity.delete(c.env, id);
     return ok(c, { id, deleted });
   });
+  // MEDIA ASSET CATEGORIES
+  app.get('/api/media-asset-categories', async (c) => {
+    await MediaAssetCategoryEntity.ensureSeed(c.env);
+    const { items } = await MediaAssetCategoryEntity.list(c.env);
+    return ok(c, items);
+  });
+  app.post('/api/media-asset-categories', async (c) => {
+    const body = await c.req.json<Omit<MediaAssetCategory, 'id'>>();
+    if (!body.name) return bad(c, 'Name is required');
+    const newCategory: MediaAssetCategory = { id: crypto.randomUUID(), name: body.name };
+    const created = await MediaAssetCategoryEntity.create(c.env, newCategory);
+    return ok(c, created);
+  });
+  app.put('/api/media-asset-categories/:id', async (c) => {
+    const id = c.req.param('id');
+    const body = await c.req.json<Partial<MediaAssetCategory>>();
+    const entity = new MediaAssetCategoryEntity(c.env, id);
+    if (!await entity.exists()) return notFound(c);
+    await entity.patch(body);
+    return ok(c, await entity.getState());
+  });
+  app.delete('/api/media-asset-categories/:id', async (c) => {
+    const id = c.req.param('id');
+    const deleted = await MediaAssetCategoryEntity.delete(c.env, id);
+    return ok(c, { id, deleted });
+  });
   // MEDIA ASSETS
   app.get('/api/media-assets', async (c) => {
-    const { items } = await MediaAssetEntity.list(c.env);
-    return ok(c, items);
+    const { items: assets } = await MediaAssetEntity.list(c.env);
+    const { items: categories } = await MediaAssetCategoryEntity.list(c.env);
+    const categoriesById = new Map(categories.map(cat => [cat.id, cat.name]));
+    const assetsWithCategoryNames = assets.map(asset => ({
+      ...asset,
+      categoryName: categoriesById.get(asset.categoryId) || 'Uncategorized',
+    }));
+    return ok(c, assetsWithCategoryNames);
   });
   app.post('/api/media-assets', async (c) => {
     const body = await c.req.json<Omit<MediaAsset, 'id'>>();
-    if (!body.label || !body.url || !body.category) return bad(c, 'Label, URL, and category are required');
+    if (!body.label || !body.url || !body.categoryId) return bad(c, 'Label, URL, and category are required');
     const newAsset: MediaAsset = {
       ...body,
       id: crypto.randomUUID(),
