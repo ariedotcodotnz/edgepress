@@ -1,5 +1,5 @@
 import { IndexedEntity } from "./core-utils";
-import type { PressRelease, AdminUser, PRContact, StaticPage } from "@shared/types";
+import type { PressRelease, AdminUser, PRContact, StaticPage, ContactSubmission } from "@shared/types";
 import { formatISO } from "date-fns";
 // PRESS RELEASE ENTITY
 export class PressReleaseEntity extends IndexedEntity<PressRelease> {
@@ -53,19 +53,19 @@ const SEED_PAGES: StaticPage[] = [
     {
         id: 'about',
         title: 'About Media Centre',
-        content: '<p>This is the default about page content. Please edit it in the admin panel.</p>',
+        content: '<p>This is the default about page content. Please edit it in the admin panel.</p><h2>Our Philosophy</h2><p>We believe in the power of the edge. By building on Cloudflare Workers, Durable Objects, and the broader Cloudflare ecosystem, we can deliver applications that are incredibly fast, globally scalable, and secure by default. This project showcases that powerful, production-ready applications can be built without traditional servers.</p>',
         updatedAt: formatISO(new Date()),
     },
     {
         id: 'contact',
         title: 'Media Contact Page',
-        content: '<p>This is the default contact page content. Please edit it in the admin panel.</p>',
+        content: '<h2>Media Inquiries</h2><p>For all media-related questions, please contact:</p><div class="contact-info"><p><strong>Jane Doe</strong></p><p>Head of Communications</p><p><a href="mailto:media@example.com">media@example.com</a></p><p>+1 (555) 123-4567</p></div>',
         updatedAt: formatISO(new Date()),
     },
     {
         id: 'assets',
-        title: 'Media Assets Page',
-        content: '<p>This is the default assets page content. Please edit it in the admin panel.</p>',
+        title: 'Media Assets',
+        content: '<p>Download official logos, product images, and other assets for media use.</p>',
         updatedAt: formatISO(new Date()),
     }
 ];
@@ -74,4 +74,17 @@ export class StaticPageEntity extends IndexedEntity<StaticPage> {
   static readonly indexName = "staticPages";
   static readonly initialState: StaticPage = { id: "about", title: "", content: "", updatedAt: "" };
   static seedData = SEED_PAGES;
+}
+// CONTACT SUBMISSION ENTITY
+export class ContactSubmissionEntity extends IndexedEntity<ContactSubmission> {
+    static readonly entityName = "contactSubmission";
+    static readonly indexName = "contactSubmissions";
+    static readonly initialState: ContactSubmission = {
+        id: "",
+        name: "",
+        outlet: "",
+        email: "",
+        message: "",
+        submittedAt: formatISO(new Date()),
+    };
 }

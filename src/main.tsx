@@ -12,6 +12,9 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import '@/index.css'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+// Auth
+import { AuthProvider } from '@/auth/AuthContext';
+import { ProtectedRoute } from '@/auth/ProtectedRoute';
 // Layouts
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { AdminLayout } from '@/components/layout/AdminLayout';
@@ -27,6 +30,7 @@ import { DashboardPage } from '@/pages/admin/DashboardPage';
 import { PressReleasesListPage } from '@/pages/admin/PressReleasesListPage';
 import { PressReleaseEditPage } from '@/pages/admin/PressReleaseEditPage';
 import { StaticPagesPage } from '@/pages/admin/StaticPagesPage';
+import { StaticPageEditPage } from '@/pages/admin/StaticPageEditPage';
 import { AnalyticsPage } from '@/pages/admin/AnalyticsPage';
 import { UsersPage } from '@/pages/admin/UsersPage';
 const queryClient = new QueryClient();
@@ -44,32 +48,39 @@ const router = createBrowserRouter([
   },
   {
     path: "/admin",
-    element: <Outlet />, // A simple outlet for grouping admin routes
+    element: <Outlet />,
     errorElement: <RouteErrorBoundary />,
     children: [
       { path: "login", element: <LoginPage /> },
       {
         path: "media",
-        element: <AdminLayout />,
+        element: <ProtectedRoute />,
         children: [
-          { path: "", element: <DashboardPage /> },
-          { path: "press-releases", element: <PressReleasesListPage /> },
-          { path: "press-releases/new", element: <PressReleaseEditPage /> },
-          { path: "press-releases/:id/edit", element: <PressReleaseEditPage /> },
-          { path: "pages", element: <StaticPagesPage /> },
-          { path: "analytics", element: <AnalyticsPage /> },
-          { path: "users", element: <UsersPage /> },
+          {
+            element: <AdminLayout />,
+            children: [
+              { path: "", element: <DashboardPage /> },
+              { path: "press-releases", element: <PressReleasesListPage /> },
+              { path: "press-releases/new", element: <PressReleaseEditPage /> },
+              { path: "press-releases/:id/edit", element: <PressReleaseEditPage /> },
+              { path: "pages", element: <StaticPagesPage /> },
+              { path: "pages/:id/edit", element: <StaticPageEditPage /> },
+              { path: "analytics", element: <AnalyticsPage /> },
+              { path: "users", element: <UsersPage /> },
+            ]
+          }
         ]
       }
     ]
   }
 ]);
-// Do not touch this code
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   </StrictMode>,
