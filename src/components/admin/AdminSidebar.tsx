@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { Home, FileText, Image, BarChart2, Users, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/auth/AuthContext';
+import { useAuth } from '@/auth/useAuth';
 const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
   cn(
     'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',

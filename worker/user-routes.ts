@@ -10,14 +10,22 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const status = c.req.query('status');
     await PressReleaseEntity.ensureSeed(c.env);
     const { items } = await PressReleaseEntity.list(c.env);
-    const filtered = status ? items.filter(pr => pr.status === status) : items;
+    let filtered = items;
+    if (status) {
+        if (status === 'Published') {
+            const now = new Date();
+            filtered = items.filter(pr => pr.status === 'Published' && new Date(pr.publishAt) <= now);
+        } else {
+            filtered = items.filter(pr => pr.status === status);
+        }
+    }
     filtered.sort((a, b) => new Date(b.publishAt).getTime() - new Date(a.publishAt).getTime());
     return ok(c, filtered);
   });
   app.get('/api/press-releases/slug/:slug', async (c) => {
     const slug = c.req.param('slug');
     const { items } = await PressReleaseEntity.list(c.env);
-    const release = items.find(pr => pr.slug === slug);
+    const release = items.find(pr => pr.slug === slug && pr.status === 'Published' && new Date(pr.publishAt) <= new Date());
     if (!release) return notFound(c, 'Press release not found');
     return ok(c, release);
   });
@@ -38,7 +46,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       status: body.status || 'Draft',
       tags: body.tags || [],
       attachments: body.attachments || [],
-      contact: body.contact || { id: '', name: '', title: '', email: '' },
+      contact: body.contact || { id: 'contact-1', name: 'Jane Doe', title: 'Head of Communications', email: 'media@example.com' },
       ...body,
       title: body.title,
       slug: body.slug,
@@ -60,6 +68,39 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const id = c.req.param('id');
     const deleted = await PressReleaseEntity.delete(c.env, id);
     return ok(c, { id, deleted });
+  });
+  app.get('/api/press-releases/:id/generate-email', async (c) => {
+    const id = c.req.param('id');
+    const releaseEntity = new PressReleaseEntity(c.env, id);
+    if (!await releaseEntity.exists()) return notFound(c, 'Press release not found');
+    const release = await releaseEntity.getState();
+    const publicUrl = `${new URL(c.req.url).origin}/press/${release.slug}`;
+    const subject = `[Press Release] ${release.title}`;
+    const htmlBody = `
+        <p>Hi,</p>
+        <p>${release.summary}</p>
+        <p>Read the full press release here: <a href="${publicUrl}">${publicUrl}</a></p>
+        <br/>
+        <p>---</p>
+        <p><strong>About EdgePress</strong></p>
+        <p>EdgePress is the leading provider of next-generation, serverless content management solutions. Our mission is to empower creators and businesses to deliver content faster and more securely than ever before, leveraging the power of the global Cloudflare network.</p>
+        <p><strong>Media Contact:</strong><br/>
+        ${release.contact.name}<br/>
+        ${release.contact.email}
+        </p>
+    `.replace(/\n\s+/g, '\n').trim();
+    const plainTextBody = `
+        Hi,
+        ${release.summary}
+        Read the full press release here: ${publicUrl}
+        ---
+        About EdgePress
+        EdgePress is the leading provider of next-generation, serverless content management solutions. Our mission is to empower creators and businesses to deliver content faster and more securely than ever before, leveraging the power of the global Cloudflare network.
+        Media Contact:
+        ${release.contact.name}
+        ${release.contact.email}
+    `.replace(/\n\s+/g, '\n').trim();
+    return ok(c, { subject, htmlBody, plainTextBody });
   });
   // STATIC PAGES
   app.get('/api/pages', async (c) => {
