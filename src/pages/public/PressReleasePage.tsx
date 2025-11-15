@@ -1,14 +1,39 @@
 import { useParams, Link } from 'react-router-dom';
-import { MOCK_PRESS_RELEASES } from '@/lib/mock-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { Toaster, toast } from '@/components/ui/sonner';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
+import type { PressRelease } from '@shared/types';
+import { Skeleton } from '@/components/ui/skeleton';
 export function PressReleasePage() {
-  const { slug } = useParams();
-  const release = MOCK_PRESS_RELEASES.find((pr) => pr.slug === slug);
-  if (!release) {
+  const { slug } = useParams<{ slug: string }>();
+  const { data: release, isLoading, error } = useQuery<PressRelease>({
+    queryKey: ['pressRelease', slug],
+    queryFn: () => api(`/api/press-releases/slug/${slug}`),
+    enabled: !!slug,
+  });
+  const copyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast.success('Link copied to clipboard!');
+  };
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+        <Skeleton className="h-6 w-48 mb-8" />
+        <Skeleton className="h-6 w-40 mb-4" />
+        <Skeleton className="h-12 w-full mb-2" />
+        <Skeleton className="h-10 w-3/4 mb-4" />
+        <Skeleton className="h-6 w-1/2 mb-6" />
+        <Skeleton className="h-5 w-full mb-4" />
+        <Skeleton className="h-5 w-full mb-4" />
+        <Skeleton className="h-5 w-3/4 mb-4" />
+      </div>
+    );
+  }
+  if (error || !release) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center">
         <h1 className="text-4xl font-bold font-mono">404 - Not Found</h1>
@@ -21,10 +46,6 @@ export function PressReleasePage() {
       </div>
     );
   }
-  const copyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast.success('Link copied to clipboard!');
-  };
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <Toaster />
@@ -62,16 +83,18 @@ export function PressReleasePage() {
           <div className="mt-8 prose prose-lg max-w-none prose-headings:font-mono prose-headings:font-bold prose-a:text-foreground prose-a:underline hover:prose-a:text-brutal-yellow"
             dangerouslySetInnerHTML={{ __html: release.content }}
           />
-          <div className="mt-12 border-t-2 border-b-2 border-foreground py-8">
-            <h3 className="font-mono uppercase font-bold text-lg">Media Contact</h3>
-            <div className="mt-4 space-y-1">
-              <p>{release.contact.name}, {release.contact.title}</p>
-              <p>
-                <a href={`mailto:${release.contact.email}`} className="hover:underline">{release.contact.email}</a>
-              </p>
-              {release.contact.phone && <p>{release.contact.phone}</p>}
+          {release.contact?.name && (
+            <div className="mt-12 border-t-2 border-b-2 border-foreground py-8">
+              <h3 className="font-mono uppercase font-bold text-lg">Media Contact</h3>
+              <div className="mt-4 space-y-1">
+                <p>{release.contact.name}, {release.contact.title}</p>
+                <p>
+                  <a href={`mailto:${release.contact.email}`} className="hover:underline">{release.contact.email}</a>
+                </p>
+                {release.contact.phone && <p>{release.contact.phone}</p>}
+              </div>
             </div>
-          </div>
+          )}
           <div className="mt-8 flex justify-end">
             <Button
               onClick={copyLink}

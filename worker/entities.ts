@@ -1,41 +1,77 @@
-/**
- * Minimal real-world demo: One Durable Object instance per entity (User, ChatBoard), with Indexes for listing.
- */
 import { IndexedEntity } from "./core-utils";
-import type { User, Chat, ChatMessage } from "@shared/types";
-import { MOCK_CHAT_MESSAGES, MOCK_CHATS, MOCK_USERS } from "@shared/mock-data";
-
-// USER ENTITY: one DO instance per user
-export class UserEntity extends IndexedEntity<User> {
-  static readonly entityName = "user";
-  static readonly indexName = "users";
-  static readonly initialState: User = { id: "", name: "" };
-  static seedData = MOCK_USERS;
+import type { PressRelease, AdminUser, PRContact, StaticPage } from "@shared/types";
+import { formatISO } from "date-fns";
+// PRESS RELEASE ENTITY
+export class PressReleaseEntity extends IndexedEntity<PressRelease> {
+  static readonly entityName = "pressRelease";
+  static readonly indexName = "pressReleases";
+  static readonly initialState: PressRelease = {
+    id: "",
+    title: "",
+    slug: "",
+    summary: "",
+    content: "",
+    tags: [],
+    status: 'Draft',
+    publishAt: formatISO(new Date()),
+    createdAt: formatISO(new Date()),
+    updatedAt: formatISO(new Date()),
+    attachments: [],
+    contact: { id: '', name: '', title: '', email: '' },
+  };
 }
-
-// CHAT BOARD ENTITY: one DO instance per chat board, stores its own messages
-export type ChatBoardState = Chat & { messages: ChatMessage[] };
-
-const SEED_CHAT_BOARDS: ChatBoardState[] = MOCK_CHATS.map(c => ({
-  ...c,
-  messages: MOCK_CHAT_MESSAGES.filter(m => m.chatId === c.id),
-}));
-
-export class ChatBoardEntity extends IndexedEntity<ChatBoardState> {
-  static readonly entityName = "chat";
-  static readonly indexName = "chats";
-  static readonly initialState: ChatBoardState = { id: "", title: "", messages: [] };
-  static seedData = SEED_CHAT_BOARDS;
-
-  async listMessages(): Promise<ChatMessage[]> {
-    const { messages } = await this.getState();
-    return messages;
-  }
-
-  async sendMessage(userId: string, text: string): Promise<ChatMessage> {
-    const msg: ChatMessage = { id: crypto.randomUUID(), chatId: this.id, userId, text, ts: Date.now() };
-    await this.mutate(s => ({ ...s, messages: [...s.messages, msg] }));
-    return msg;
-  }
+// ADMIN USER ENTITY
+export class AdminUserEntity extends IndexedEntity<AdminUser> {
+  static readonly entityName = "adminUser";
+  static readonly indexName = "adminUsers";
+  static readonly initialState: AdminUser = {
+    id: "",
+    name: "",
+    email: "",
+    role: 'Editor',
+    createdAt: formatISO(new Date()),
+  };
 }
-
+// PR CONTACT ENTITY
+const SEED_CONTACTS: PRContact[] = [
+    {
+        id: 'contact-1',
+        name: 'Jane Doe',
+        title: 'Head of Communications',
+        email: 'media@example.com',
+        phone: '+1 (555) 123-4567',
+    }
+];
+export class PRContactEntity extends IndexedEntity<PRContact> {
+  static readonly entityName = "prContact";
+  static readonly indexName = "prContacts";
+  static readonly initialState: PRContact = { id: "", name: "", title: "", email: "" };
+  static seedData = SEED_CONTACTS;
+}
+// STATIC PAGE ENTITY
+const SEED_PAGES: StaticPage[] = [
+    {
+        id: 'about',
+        title: 'About Media Centre',
+        content: '<p>This is the default about page content. Please edit it in the admin panel.</p>',
+        updatedAt: formatISO(new Date()),
+    },
+    {
+        id: 'contact',
+        title: 'Media Contact Page',
+        content: '<p>This is the default contact page content. Please edit it in the admin panel.</p>',
+        updatedAt: formatISO(new Date()),
+    },
+    {
+        id: 'assets',
+        title: 'Media Assets Page',
+        content: '<p>This is the default assets page content. Please edit it in the admin panel.</p>',
+        updatedAt: formatISO(new Date()),
+    }
+];
+export class StaticPageEntity extends IndexedEntity<StaticPage> {
+  static readonly entityName = "staticPage";
+  static readonly indexName = "staticPages";
+  static readonly initialState: StaticPage = { id: "about", title: "", content: "", updatedAt: "" };
+  static seedData = SEED_PAGES;
+}
