@@ -13,7 +13,7 @@ import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import '@/index.css'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Auth
-import { AuthProvider } from '@/auth/AuthContext';
+import { AuthProvider } from '@/auth/AuthProvider';
 import { ProtectedRoute } from '@/auth/ProtectedRoute';
 // Layouts
 import { PublicLayout } from '@/components/layout/PublicLayout';

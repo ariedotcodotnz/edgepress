@@ -1,20 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext, type AuthContextType } from './AuthContext';
+import { AuthContext } from './AuthContext';
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    // Safely check for localStorage availability
-    if (typeof window !== 'undefined' && window.localStorage) {
-      return !!localStorage.getItem('authToken');
-    }
-    return false;
+    return !!localStorage.getItem('authToken');
   });
   const navigate = useNavigate();
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const token = localStorage.getItem('authToken');
-      setIsAuthenticated(!!token);
-    }
+    const token = localStorage.getItem('authToken');
+    setIsAuthenticated(!!token);
   }, []);
   const login = (email: string) => {
     // Mock login: In a real app, you'd call an API and get a real token.
@@ -28,9 +22,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Navigate to login page after logout to prevent being stuck on a protected page
     navigate('/admin/login');
   };
-  const authContextValue: AuthContextType = { isAuthenticated, login, logout };
   return (
-    <AuthContext.Provider value={authContextValue}>
+    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

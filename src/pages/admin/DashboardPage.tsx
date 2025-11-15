@@ -13,10 +13,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { MOCK_PRESS_RELEASES } from "@/lib/mock-data"
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
+import { useQuery } from "@tanstack/react-query"
+import { api } from "@/lib/api-client"
+import type { AnalyticsSummary, PressReleaseWithViews } from "@shared/types"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Link } from "react-router-dom"
 export function DashboardPage() {
+  const { data: summary, isLoading: isLoadingSummary } = useQuery<AnalyticsSummary>({
+    queryKey: ['analyticsSummary'],
+    queryFn: () => api('/api/analytics/summary'),
+  });
+  const { data: topReleases, isLoading: isLoadingReleases } = useQuery<PressReleaseWithViews[]>({
+    queryKey: ['topPressReleases'],
+    queryFn: () => api('/api/analytics/press-releases'),
+  });
   return (
     <>
       <div className="flex items-center">
@@ -30,7 +42,7 @@ export function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{MOCK_PRESS_RELEASES.length}</div>
+            {isLoadingSummary ? <Skeleton className="h-8 w-12" /> : <div className="text-2xl font-bold">{summary?.total}</div>}
           </CardContent>
         </Card>
         <Card>
@@ -38,9 +50,7 @@ export function DashboardPage() {
             <CardTitle className="text-sm font-medium">Published</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {MOCK_PRESS_RELEASES.filter(p => p.status === 'Published').length}
-            </div>
+            {isLoadingSummary ? <Skeleton className="h-8 w-12" /> : <div className="text-2xl font-bold">{summary?.published}</div>}
           </CardContent>
         </Card>
         <Card>
@@ -48,24 +58,22 @@ export function DashboardPage() {
             <CardTitle className="text-sm font-medium">Drafts</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {MOCK_PRESS_RELEASES.filter(p => p.status === 'Draft').length}
-            </div>
+            {isLoadingSummary ? <Skeleton className="h-8 w-12" /> : <div className="text-2xl font-bold">{summary?.drafts}</div>}
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Page Views (7 Days)</CardTitle>
+            <CardTitle className="text-sm font-medium">Views (7 Days)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,234</div>
+            {isLoadingSummary ? <Skeleton className="h-8 w-12" /> : <div className="text-2xl font-bold">{summary?.viewsLast7Days}</div>}
           </CardContent>
         </Card>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Recent Press Releases</CardTitle>
-          <CardDescription>A list of your most recent press releases.</CardDescription>
+          <CardTitle>Top Press Releases</CardTitle>
+          <CardDescription>Your most viewed press releases.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -73,17 +81,29 @@ export function DashboardPage() {
               <TableRow>
                 <TableHead>Title</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Publish Date</TableHead>
+                <TableHead className="text-right">Views</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {MOCK_PRESS_RELEASES.slice(0, 5).map(pr => (
+              {isLoadingReleases ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                    <TableCell className="text-right"><Skeleton className="h-5 w-10 ml-auto" /></TableCell>
+                  </TableRow>
+                ))
+              ) : topReleases?.slice(0, 5).map(pr => (
                 <TableRow key={pr.id}>
-                  <TableCell className="font-medium">{pr.title}</TableCell>
-                  <TableCell>
-                    <Badge variant={pr.status === 'Published' ? 'default' : 'secondary'}>{pr.status}</Badge>
+                  <TableCell className="font-medium">
+                    <Link to={`/admin/media/press-releases/${pr.id}/edit`} className="hover:underline">
+                      {pr.title}
+                    </Link>
                   </TableCell>
-                  <TableCell>{format(new Date(pr.publishAt), 'MMM dd, yyyy')}</TableCell>
+                  <TableCell>
+                    <Badge variant={pr.status === 'Published' ? 'default' : pr.status === 'Scheduled' ? 'outline' : 'secondary'}>{pr.status}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right">{pr.views}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

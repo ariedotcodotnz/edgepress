@@ -1,5 +1,5 @@
 import { IndexedEntity } from "./core-utils";
-import type { PressRelease, AdminUser, PRContact, StaticPage, ContactSubmission } from "@shared/types";
+import type { PressRelease, AdminUser, PRContact, StaticPage, ContactSubmission, AnalyticsEvent } from "@shared/types";
 import { formatISO } from "date-fns";
 // PRESS RELEASE ENTITY
 export class PressReleaseEntity extends IndexedEntity<PressRelease> {
@@ -86,5 +86,16 @@ export class ContactSubmissionEntity extends IndexedEntity<ContactSubmission> {
         email: "",
         message: "",
         submittedAt: formatISO(new Date()),
+    };
+}
+// ANALYTICS EVENT ENTITY
+export class AnalyticsEventEntity extends IndexedEntity<AnalyticsEvent> {
+    static readonly entityName = "analyticsEvent";
+    static readonly indexName = "analyticsEvents";
+    static readonly initialState: AnalyticsEvent = {
+        id: "",
+        type: 'pageview',
+        pressReleaseId: "",
+        timestamp: formatISO(new Date()),
     };
 }
