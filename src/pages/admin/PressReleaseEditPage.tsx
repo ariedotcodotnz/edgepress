@@ -19,7 +19,7 @@ import { CalendarIcon, Copy, Mail, PlusCircle, Trash2, Paperclip, Eye } from "lu
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -63,7 +63,7 @@ export function PressReleaseEditPage() {
     queryKey: ['mediaAssets'],
     queryFn: () => api('/api/media-assets'),
   });
-  const { control, register, handleSubmit, formState: { errors }, setValue, watch, getValues } = useForm<PressReleaseFormData>({
+  const { control, register, handleSubmit, formState: { errors }, setValue, watch, getValues, reset } = useForm<PressReleaseFormData>({
     resolver: zodResolver(pressReleaseSchema),
     defaultValues: {
       title: '',
@@ -77,12 +77,17 @@ export function PressReleaseEditPage() {
       seoTitle: '',
       seoDescription: '',
     },
-    values: release ? {
-      ...release,
-      publishAt: new Date(release.publishAt),
-      contactId: release.contact.id,
-    } : undefined,
   });
+
+  useEffect(() => {
+    if (release) {
+      reset({
+        ...release,
+        publishAt: new Date(release.publishAt),
+        contactId: release.contact.id,
+      });
+    }
+  }, [release, reset]);
   const mutation = useMutation({
     mutationFn: (data: PressReleaseFormData) => {
       const selectedContact = contacts?.find(c => c.id === data.contactId);
