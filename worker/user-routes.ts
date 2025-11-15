@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
-import { PressReleaseEntity, StaticPageEntity, AdminUserEntity, ContactSubmissionEntity } from "./entities";
+import { PressReleaseEntity, StaticPageEntity, AdminUserEntity, ContactSubmissionEntity, AnalyticsEventEntity } from "./entities";
 import { ok, bad, notFound } from './core-utils';
-import type { PressRelease, StaticPage, AdminUser, ContactSubmission } from "@shared/types";
-import { formatISO } from "date-fns";
+import type { PressRelease, StaticPage, AdminUser, ContactSubmission, AnalyticsEvent, AnalyticsSummary, PressReleaseWithViews } from "@shared/types";
+import { formatISO, subDays, eachDayOfInterval, format } from "date-fns";
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
   // PRESS RELEASES
   app.get('/api/press-releases', async (c) => {
@@ -158,5 +158,56 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     };
     const created = await ContactSubmissionEntity.create(c.env, newSubmission);
     return ok(c, created);
+  });
+  // ANALYTICS
+  app.post('/api/analytics/track', async (c) => {
+    const body = await c.req.json<{ type: 'pageview'; pressReleaseId: string }>();
+    if (body.type !== 'pageview' || !body.pressReleaseId) {
+      return bad(c, 'Invalid tracking event');
+    }
+    const newEvent: AnalyticsEvent = {
+      id: crypto.randomUUID(),
+      type: 'pageview',
+      pressReleaseId: body.pressReleaseId,
+      timestamp: formatISO(new Date()),
+    };
+    await AnalyticsEventEntity.create(c.env, newEvent);
+    return ok(c, { success: true });
+  });
+  app.get('/api/analytics/summary', async (c) => {
+    const { items: allReleases } = await PressReleaseEntity.list(c.env);
+    const { items: allEvents } = await AnalyticsEventEntity.list(c.env);
+    const now = new Date();
+    const sevenDaysAgo = subDays(now, 7);
+    const thirtyDaysAgo = subDays(now, 30);
+    const viewsLast7Days = allEvents.filter(e => new Date(e.timestamp) >= sevenDaysAgo).length;
+    const dateRange = eachDayOfInterval({ start: thirtyDaysAgo, end: now });
+    const viewsByDay = dateRange.map(date => ({
+        date: format(date, 'MMM d'),
+        views: allEvents.filter(e => format(new Date(e.timestamp), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')).length
+    }));
+    const summary: AnalyticsSummary = {
+      total: allReleases.length,
+      published: allReleases.filter(pr => pr.status === 'Published').length,
+      drafts: allReleases.filter(pr => pr.status === 'Draft').length,
+      scheduled: allReleases.filter(pr => pr.status === 'Scheduled').length,
+      viewsLast7Days,
+      viewsLast30DaysChart: viewsByDay,
+    };
+    return ok(c, summary);
+  });
+  app.get('/api/analytics/press-releases', async (c) => {
+    const { items: allReleases } = await PressReleaseEntity.list(c.env);
+    const { items: allEvents } = await AnalyticsEventEntity.list(c.env);
+    const viewCounts = allEvents.reduce((acc, event) => {
+        acc[event.pressReleaseId] = (acc[event.pressReleaseId] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+    const releasesWithViews: PressReleaseWithViews[] = allReleases.map(pr => ({
+        ...pr,
+        views: viewCounts[pr.id] || 0,
+    }));
+    releasesWithViews.sort((a, b) => b.views - a.views);
+    return ok(c, releasesWithViews);
   });
 }

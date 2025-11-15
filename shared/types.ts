@@ -59,3 +59,20 @@ export interface PRContact {
   email: string;
   phone?: string;
 }
+export interface AnalyticsEvent {
+    id: string;
+    type: 'pageview';
+    pressReleaseId: string;
+    timestamp: string; // ISO 8601
+}
+export interface AnalyticsSummary {
+    total: number;
+    published: number;
+    drafts: number;
+    scheduled: number;
+    viewsLast7Days: number;
+    viewsLast30DaysChart: { date: string; views: number }[];
+}
+export interface PressReleaseWithViews extends PressRelease {
+    views: number;
+}

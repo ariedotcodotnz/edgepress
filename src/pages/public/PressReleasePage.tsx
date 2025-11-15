@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { Toaster, toast } from '@/components/ui/sonner';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import type { PressRelease } from '@shared/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useEffect } from 'react';
 export function PressReleasePage() {
   const { slug } = useParams<{ slug: string }>();
   const { data: release, isLoading, error } = useQuery<PressRelease>({
@@ -15,6 +16,20 @@ export function PressReleasePage() {
     queryFn: () => api(`/api/press-releases/slug/${slug}`),
     enabled: !!slug,
   });
+  const trackViewMutation = useMutation({
+    mutationFn: (pressReleaseId: string) => 
+      api('/api/analytics/track', {
+        method: 'POST',
+        body: JSON.stringify({ type: 'pageview', pressReleaseId }),
+      }),
+    // We don't need to show any UI feedback for this
+    onError: (error) => console.error("Failed to track page view:", error),
+  });
+  useEffect(() => {
+    if (release?.id) {
+      trackViewMutation.mutate(release.id);
+    }
+  }, [release?.id]);
   const copyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     toast.success('Link copied to clipboard!');
