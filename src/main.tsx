@@ -35,6 +35,7 @@ import { AnalyticsPage } from '@/pages/admin/AnalyticsPage';
 import { UsersPage } from '@/pages/admin/UsersPage';
 import { MediaAssetsEditPage } from '@/pages/admin/MediaAssetsEditPage';
 import { ContactsEditPage } from '@/pages/admin/ContactsEditPage';
+import { ContactSubmissionsPage } from '@/pages/admin/ContactSubmissionsPage';
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
@@ -78,6 +79,7 @@ const router = createBrowserRouter([
                   { path: "pages/contact/manage", element: <ContactsEditPage /> },
                   { path: "analytics", element: <AnalyticsPage /> },
                   { path: "users", element: <UsersPage /> },
+                  { path: "submissions", element: <ContactSubmissionsPage /> },
                 ]
               }
             ]
