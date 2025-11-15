@@ -11,6 +11,7 @@ import {
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import '@/index.css'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Layouts
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { AdminLayout } from '@/components/layout/AdminLayout';
@@ -28,6 +29,7 @@ import { PressReleaseEditPage } from '@/pages/admin/PressReleaseEditPage';
 import { StaticPagesPage } from '@/pages/admin/StaticPagesPage';
 import { AnalyticsPage } from '@/pages/admin/AnalyticsPage';
 import { UsersPage } from '@/pages/admin/UsersPage';
+const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
     element: <PublicLayout />,
@@ -66,7 +68,9 @@ const router = createBrowserRouter([
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <RouterProvider router={router} />
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
     </ErrorBoundary>
   </StrictMode>,
 )

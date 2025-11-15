@@ -14,12 +14,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { MOCK_PRESS_RELEASES } from "@/lib/mock-data"
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
-import { PlusCircle } from "lucide-react"
+import { PlusCircle, MoreHorizontal, Edit, Trash2 } from "lucide-react"
 import { Link } from "react-router-dom"
+import { useQuery } from "@tanstack/react-query"
+import { api } from "@/lib/api-client"
+import type { PressRelease } from "@shared/types"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 export function PressReleasesListPage() {
+  const { data: releases, isLoading, error } = useQuery<PressRelease[]>({
+    queryKey: ['pressReleases'],
+    queryFn: () => api('/api/press-releases'),
+  });
   return (
     <>
       <div className="flex items-center justify-between">
@@ -46,10 +59,27 @@ export function PressReleasesListPage() {
                 <TableHead>Status</TableHead>
                 <TableHead>Publish Date</TableHead>
                 <TableHead>Last Updated</TableHead>
+                <TableHead><span className="sr-only">Actions</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {MOCK_PRESS_RELEASES.map(pr => (
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                  </TableRow>
+                ))
+              ) : error ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-destructive">
+                    Failed to load press releases.
+                  </TableCell>
+                </TableRow>
+              ) : releases?.map(pr => (
                 <TableRow key={pr.id}>
                   <TableCell className="font-medium">{pr.title}</TableCell>
                   <TableCell>
@@ -57,6 +87,26 @@ export function PressReleasesListPage() {
                   </TableCell>
                   <TableCell>{format(new Date(pr.publishAt), 'MMM dd, yyyy')}</TableCell>
                   <TableCell>{format(new Date(pr.updatedAt), 'MMM dd, yyyy')}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Open menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link to={`/admin/media/press-releases/${pr.id}/edit`}>
+                            <Edit className="mr-2 h-4 w-4" /> Edit
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive">
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
