@@ -9,7 +9,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ThemeToggle } from "@/components/ThemeToggle"
-import { useAuth } from "@/auth/AuthContext"
+import { useAuth } from "@/auth/useAuth"
 import { useNavigate } from "react-router-dom"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -63,10 +63,10 @@ export function LoginPage() {
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
                 </div>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  required 
+                <Input
+                  id="password"
+                  type="password"
+                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
