@@ -36,37 +36,46 @@ import { UsersPage } from '@/pages/admin/UsersPage';
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
-    element: <PublicLayout />,
-    errorElement: <RouteErrorBoundary />,
+    element: (
+      <AuthProvider>
+        <Outlet />
+      </AuthProvider>
+    ),
     children: [
-      { path: "/", element: <HomePage /> },
-      { path: "/press/:slug", element: <PressReleasePage /> },
-      { path: "/about", element: <AboutPage /> },
-      { path: "/contact", element: <ContactPage /> },
-      { path: "/assets", element: <AssetsPage /> },
-    ]
-  },
-  {
-    path: "/admin",
-    element: <Outlet />,
-    errorElement: <RouteErrorBoundary />,
-    children: [
-      { path: "login", element: <LoginPage /> },
       {
-        path: "media",
-        element: <ProtectedRoute />,
+        element: <PublicLayout />,
+        errorElement: <RouteErrorBoundary />,
         children: [
+          { path: "/", element: <HomePage /> },
+          { path: "/press/:slug", element: <PressReleasePage /> },
+          { path: "/about", element: <AboutPage /> },
+          { path: "/contact", element: <ContactPage /> },
+          { path: "/assets", element: <AssetsPage /> },
+        ]
+      },
+      {
+        path: "/admin",
+        element: <Outlet />,
+        errorElement: <RouteErrorBoundary />,
+        children: [
+          { path: "login", element: <LoginPage /> },
           {
-            element: <AdminLayout />,
+            path: "media",
+            element: <ProtectedRoute />,
             children: [
-              { path: "", element: <DashboardPage /> },
-              { path: "press-releases", element: <PressReleasesListPage /> },
-              { path: "press-releases/new", element: <PressReleaseEditPage /> },
-              { path: "press-releases/:id/edit", element: <PressReleaseEditPage /> },
-              { path: "pages", element: <StaticPagesPage /> },
-              { path: "pages/:id/edit", element: <StaticPageEditPage /> },
-              { path: "analytics", element: <AnalyticsPage /> },
-              { path: "users", element: <UsersPage /> },
+              {
+                element: <AdminLayout />,
+                children: [
+                  { path: "", element: <DashboardPage /> },
+                  { path: "press-releases", element: <PressReleasesListPage /> },
+                  { path: "press-releases/new", element: <PressReleaseEditPage /> },
+                  { path: "press-releases/:id/edit", element: <PressReleaseEditPage /> },
+                  { path: "pages", element: <StaticPagesPage /> },
+                  { path: "pages/:id/edit", element: <StaticPageEditPage /> },
+                  { path: "analytics", element: <AnalyticsPage /> },
+                  { path: "users", element: <UsersPage /> },
+                ]
+              }
             ]
           }
         ]
@@ -78,9 +87,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <RouterProvider router={router} />
-        </AuthProvider>
+        <RouterProvider router={router} />
       </QueryClientProvider>
     </ErrorBoundary>
   </StrictMode>,
