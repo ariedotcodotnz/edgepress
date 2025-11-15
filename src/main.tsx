@@ -13,7 +13,7 @@ import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import '@/index.css'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Auth
-import { AuthProvider } from '@/auth/AuthProvider';
+import { AuthProvider } from '@/auth/AuthProvider'; // This now correctly points to the consolidated file
 import { ProtectedRoute } from '@/auth/ProtectedRoute';
 // Layouts
 import { PublicLayout } from '@/components/layout/PublicLayout';
