@@ -2,12 +2,13 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import type { PressRelease } from '@shared/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useMemo } from 'react';
 function PressReleaseCardSkeleton() {
   return (
     <div className="block border-2 border-foreground bg-background p-6 shadow-hard-sm">
@@ -23,10 +24,28 @@ function PressReleaseCardSkeleton() {
   );
 }
 export function HomePage() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const { data: releases, isLoading, error } = useQuery<PressRelease[]>({
     queryKey: ['publishedPressReleases'],
     queryFn: () => api('/api/press-releases?status=Published'),
   });
+  const allTags = useMemo(() => {
+    if (!releases) return [];
+    const tags = new Set<string>();
+    releases.forEach(r => r.tags.forEach(t => tags.add(t)));
+    return Array.from(tags);
+  }, [releases]);
+  const filteredReleases = useMemo(() => {
+    if (!releases) return [];
+    return releases.filter(release => {
+      const searchMatch = searchQuery.trim() === '' ||
+        release.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        release.summary.toLowerCase().includes(searchQuery.toLowerCase());
+      const tagMatch = !selectedTag || release.tags.includes(selectedTag);
+      return searchMatch && tagMatch;
+    });
+  }, [releases, searchQuery, selectedTag]);
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-16 md:py-24 lg:py-32">
@@ -39,26 +58,39 @@ export function HomePage() {
           </p>
         </div>
         <div className="mt-16 md:mt-24">
-          <div className="flex flex-col md:flex-row gap-4 mb-8">
+          <div className="flex flex-col md:flex-row gap-4 mb-4">
             <Input
               type="search"
               placeholder="Search articles..."
               className="h-12 text-lg rounded-none border-2 border-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-brutal-yellow"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <Button
-              size="lg"
-              className="h-12 rounded-none bg-foreground text-background font-bold uppercase tracking-wider border-2 border-foreground hover:bg-brutal-yellow hover:text-foreground active:translate-y-1 active:shadow-none shadow-hard-sm"
-            >
-              Search
-            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2 mb-8">
+            {allTags.map(tag => (
+              <Button
+                key={tag}
+                variant={selectedTag === tag ? "default" : "outline"}
+                onClick={() => setSelectedTag(tag === selectedTag ? null : tag)}
+                className="rounded-none border-2 border-foreground font-mono uppercase text-sm"
+              >
+                {tag}
+              </Button>
+            ))}
+            {selectedTag && (
+              <Button variant="ghost" size="icon" onClick={() => setSelectedTag(null)}>
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {isLoading ? (
               Array.from({ length: 3 }).map((_, i) => <PressReleaseCardSkeleton key={i} />)
             ) : error ? (
               <p className="col-span-full text-center text-destructive">Failed to load articles.</p>
-            ) : (
-              releases?.map((release) => (
+            ) : filteredReleases.length > 0 ? (
+              filteredReleases.map((release) => (
                 <Link
                   to={`/press/${release.slug}`}
                   key={release.id}
@@ -91,6 +123,8 @@ export function HomePage() {
                   </div>
                 </Link>
               ))
+            ) : (
+              <p className="col-span-full text-center text-muted-foreground">No articles found matching your criteria.</p>
             )}
           </div>
         </div>

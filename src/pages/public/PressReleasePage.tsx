@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Copy } from 'lucide-react';
+import { ArrowLeft, Copy, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { Toaster, toast } from '@/components/ui/sonner';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -17,12 +17,11 @@ export function PressReleasePage() {
     enabled: !!slug,
   });
   const trackViewMutation = useMutation({
-    mutationFn: (pressReleaseId: string) => 
+    mutationFn: (pressReleaseId: string) =>
       api('/api/analytics/track', {
         method: 'POST',
         body: JSON.stringify({ type: 'pageview', pressReleaseId }),
       }),
-    // We don't need to show any UI feedback for this
     onError: (error) => console.error("Failed to track page view:", error),
   });
   useEffect(() => {
@@ -98,6 +97,22 @@ export function PressReleasePage() {
           <div className="mt-8 prose prose-lg max-w-none prose-headings:font-mono prose-headings:font-bold prose-a:text-foreground prose-a:underline hover:prose-a:text-brutal-yellow"
             dangerouslySetInnerHTML={{ __html: release.content }}
           />
+          {release.attachments && release.attachments.length > 0 && (
+            <div className="mt-12 border-t-2 border-foreground py-8">
+              <h3 className="font-mono uppercase font-bold text-lg">Downloads</h3>
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {release.attachments.map(asset => (
+                  <a key={asset.id} href={asset.url} download className="group flex items-center justify-between p-4 border-2 border-foreground hover:bg-brutal-yellow transition-colors">
+                    <div>
+                      <p className="font-bold">{asset.label}</p>
+                      <p className="text-sm text-foreground/70">{asset.filename}</p>
+                    </div>
+                    <Download className="h-5 w-5 text-foreground/70 group-hover:text-foreground" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
           {release.contact?.name && (
             <div className="mt-12 border-t-2 border-b-2 border-foreground py-8">
               <h3 className="font-mono uppercase font-bold text-lg">Media Contact</h3>

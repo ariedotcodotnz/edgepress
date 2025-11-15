@@ -146,6 +146,11 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     return ok(c, { id, deleted });
   });
   // CONTACT SUBMISSIONS
+  app.get('/api/contact-submissions', async (c) => {
+    const { items } = await ContactSubmissionEntity.list(c.env);
+    items.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+    return ok(c, items);
+  });
   app.post('/api/contact-submissions', async (c) => {
     const body = await c.req.json<Omit<ContactSubmission, 'id' | 'submittedAt'>>();
     if (!body.name || !body.email || !body.message || !body.outlet) {
@@ -194,11 +199,11 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const body = await c.req.json<Omit<MediaAsset, 'id'>>();
     if (!body.label || !body.url || !body.category) return bad(c, 'Label, URL, and category are required');
     const newAsset: MediaAsset = {
+      ...body,
       id: crypto.randomUUID(),
       filename: body.url.split('/').pop() || 'file',
-      fileType: 'unknown',
-      size: 0,
-      ...body
+      fileType: body.fileType || 'unknown',
+      size: body.size || 0,
     };
     const created = await MediaAssetEntity.create(c.env, newAsset);
     return ok(c, created);

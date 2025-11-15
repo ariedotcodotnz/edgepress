@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, FileText, Image, BarChart2, Users, LogOut } from 'lucide-react';
+import { Home, FileText, Image, BarChart2, Users, LogOut, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/auth/useAuth';
@@ -33,6 +33,10 @@ export function AdminSidebar() {
             <NavLink to="/admin/media/pages" className={navLinkClasses}>
               <Image className="h-4 w-4" />
               Static Pages
+            </NavLink>
+            <NavLink to="/admin/media/submissions" className={navLinkClasses}>
+              <MessageSquare className="h-4 w-4" />
+              Submissions
             </NavLink>
             <NavLink to="/admin/media/analytics" className={navLinkClasses}>
               <BarChart2 className="h-4 w-4" />
