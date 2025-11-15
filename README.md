@@ -1,6 +1,6 @@
 # EdgePress: Neo-Brutalist Media Centre & CMS
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/ariedotcodotnz/edgepress)
 
 EdgePress is a full-stack, production-ready Media Centre and Content Management System (CMS) built on Cloudflare's serverless platform. It features a striking, public-facing neo-brutalist frontend for press releases and company information, designed to be visually impactful and memorable. Complementing this is a clean, intuitive, and password-protected admin panel for content creators to manage press releases, static pages, media assets, and users. The system includes advanced features like scheduled publishing, per-article analytics, and an automated email content generator to streamline media outreach.
 
@@ -82,7 +82,7 @@ This project is designed for seamless deployment to Cloudflare's global network.
 
 You can deploy this application with a single click using the button below.
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/ariedotcodotnz/edgepress)
 
 ### Manual Deployment via CLI
 
