@@ -8,7 +8,7 @@ EdgePress is a full-stack, production-ready Media Centre and Content Management 
 
 *   **Public-Facing Media Centre**: A visually distinct neo-brutalist frontend for press releases, about pages, and contact information.
 *   **Password-Protected Admin CMS**: A clean, modern, and intuitive interface for content management.
-*   **Press Release Management**: Full CRUD functionality for press releases, including a rich text editor, status management (Draft, Published), and SEO fields.
+*   **Press Release Management**: Full CRUD functionality for press releases, including a rich text editor, status manjikjkagement (Draft, Published), and SEO fields.
 *   **Scheduled Publishing**: Write content in advance and schedule it to be published automatically at a future date and time.
 *   **Static Page Management**: Easily edit and manage content for pages like 'About', 'Contact', and 'Media Assets'.
 *   **Built-in Analytics**: Track page views and engagement for each press release directly within the admin dashboard.
