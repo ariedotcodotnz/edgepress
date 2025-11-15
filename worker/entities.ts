@@ -1,5 +1,5 @@
 import { IndexedEntity } from "./core-utils";
-import type { PressRelease, AdminUser, PRContact, StaticPage, ContactSubmission, AnalyticsEvent } from "@shared/types";
+import type { PressRelease, AdminUser, PRContact, StaticPage, ContactSubmission, AnalyticsEvent, MediaAsset } from "@shared/types";
 import { formatISO } from "date-fns";
 // PRESS RELEASE ENTITY
 export class PressReleaseEntity extends IndexedEntity<PressRelease> {
@@ -59,7 +59,7 @@ const SEED_PAGES: StaticPage[] = [
     {
         id: 'contact',
         title: 'Media Contact Page',
-        content: '<h2>Media Inquiries</h2><p>For all media-related questions, please contact:</p><div class="contact-info"><p><strong>Jane Doe</strong></p><p>Head of Communications</p><p><a href="mailto:media@example.com">media@example.com</a></p><p>+1 (555) 123-4567</p></div>',
+        content: '<h2>Media Inquiries</h2><p>For all media-related questions, please use the form or contact one of our representatives listed below.</p>',
         updatedAt: formatISO(new Date()),
     },
     {
@@ -97,5 +97,19 @@ export class AnalyticsEventEntity extends IndexedEntity<AnalyticsEvent> {
         type: 'pageview',
         pressReleaseId: "",
         timestamp: formatISO(new Date()),
+    };
+}
+// MEDIA ASSET ENTITY
+export class MediaAssetEntity extends IndexedEntity<MediaAsset> {
+    static readonly entityName = "mediaAsset";
+    static readonly indexName = "mediaAssets";
+    static readonly initialState: MediaAsset = {
+        id: "",
+        url: "",
+        filename: "",
+        fileType: "",
+        size: 0,
+        label: "",
+        category: 'other',
     };
 }

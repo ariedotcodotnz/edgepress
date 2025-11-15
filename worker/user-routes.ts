@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
-import { PressReleaseEntity, StaticPageEntity, AdminUserEntity, ContactSubmissionEntity, AnalyticsEventEntity } from "./entities";
+import { PressReleaseEntity, StaticPageEntity, AdminUserEntity, ContactSubmissionEntity, AnalyticsEventEntity, PRContactEntity, MediaAssetEntity } from "./entities";
 import { ok, bad, notFound } from './core-utils';
-import type { PressRelease, StaticPage, AdminUser, ContactSubmission, AnalyticsEvent, AnalyticsSummary, PressReleaseWithViews } from "@shared/types";
+import type { PressRelease, StaticPage, AdminUser, ContactSubmission, AnalyticsEvent, AnalyticsSummary, PressReleaseWithViews, PRContact, MediaAsset } from "@shared/types";
 import { formatISO, subDays, eachDayOfInterval, format } from "date-fns";
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
   // PRESS RELEASES
@@ -158,6 +158,55 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     };
     const created = await ContactSubmissionEntity.create(c.env, newSubmission);
     return ok(c, created);
+  });
+  // PR CONTACTS
+  app.get('/api/pr-contacts', async (c) => {
+    await PRContactEntity.ensureSeed(c.env);
+    const { items } = await PRContactEntity.list(c.env);
+    return ok(c, items);
+  });
+  app.post('/api/pr-contacts', async (c) => {
+    const body = await c.req.json<Omit<PRContact, 'id'>>();
+    if (!body.name || !body.email || !body.title) return bad(c, 'Name, email, and title are required');
+    const newContact: PRContact = { id: crypto.randomUUID(), ...body };
+    const created = await PRContactEntity.create(c.env, newContact);
+    return ok(c, created);
+  });
+  app.put('/api/pr-contacts/:id', async (c) => {
+    const id = c.req.param('id');
+    const body = await c.req.json<Partial<PRContact>>();
+    const entity = new PRContactEntity(c.env, id);
+    if (!await entity.exists()) return notFound(c);
+    await entity.patch(body);
+    return ok(c, await entity.getState());
+  });
+  app.delete('/api/pr-contacts/:id', async (c) => {
+    const id = c.req.param('id');
+    const deleted = await PRContactEntity.delete(c.env, id);
+    return ok(c, { id, deleted });
+  });
+  // MEDIA ASSETS
+  app.get('/api/media-assets', async (c) => {
+    const { items } = await MediaAssetEntity.list(c.env);
+    return ok(c, items);
+  });
+  app.post('/api/media-assets', async (c) => {
+    const body = await c.req.json<Omit<MediaAsset, 'id'>>();
+    if (!body.label || !body.url || !body.category) return bad(c, 'Label, URL, and category are required');
+    const newAsset: MediaAsset = {
+      id: crypto.randomUUID(),
+      filename: body.url.split('/').pop() || 'file',
+      fileType: 'unknown',
+      size: 0,
+      ...body
+    };
+    const created = await MediaAssetEntity.create(c.env, newAsset);
+    return ok(c, created);
+  });
+  app.delete('/api/media-assets/:id', async (c) => {
+    const id = c.req.param('id');
+    const deleted = await MediaAssetEntity.delete(c.env, id);
+    return ok(c, { id, deleted });
   });
   // ANALYTICS
   app.post('/api/analytics/track', async (c) => {
