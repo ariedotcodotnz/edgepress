@@ -211,7 +211,7 @@ export function PressReleaseEditPage() {
               <CardDescription>Create a ready-to-send email for journalists based on this press release.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <Button onClick={() => emailMutation.mutate()} disabled={emailMutation.isPending} className="gap-2">
+              <Button type="button" onClick={() => emailMutation.mutate()} disabled={emailMutation.isPending} className="gap-2">
                 <Mail className="h-4 w-4" />
                 {emailMutation.isPending ? 'Generating...' : 'Generate Email Content'}
               </Button>
