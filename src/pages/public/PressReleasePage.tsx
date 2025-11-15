@@ -29,7 +29,7 @@ export function PressReleasePage() {
     if (release?.id) {
       trackViewMutation.mutate(release.id);
     }
-  }, [release?.id]);
+  }, [release?.id, trackViewMutation]);
   const copyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     toast.success('Link copied to clipboard!');
