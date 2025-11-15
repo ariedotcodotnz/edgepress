@@ -66,8 +66,8 @@ export const MOCK_PRESS_RELEASES: PressRelease[] = [
   },
 ];
 export const MOCK_ASSETS: MediaAsset[] = [
-    { id: 'asset-1', url: '#', filename: 'logo-dark.svg', fileType: 'image/svg+xml', size: 15000, label: 'Logo (Dark)', categoryId: 'logo' },
-    { id: 'asset-2', url: '#', filename: 'logo-light.svg', fileType: 'image/svg+xml', size: 15000, label: 'Logo (Light)', categoryId: 'logo' },
-    { id: 'asset-3', url: '#', filename: 'product-screenshot-1.png', fileType: 'image/png', size: 850000, label: 'Dashboard Screenshot', categoryId: 'product' },
-    { id: 'asset-4', url: '#', filename: 'ceo-headshot.jpg', fileType: 'image/jpeg', size: 1200000, label: 'CEO Headshot', categoryId: 'executive' },
+    { id: 'asset-1', url: '#', filename: 'logo-dark.svg', fileType: 'image/svg+xml', size: 15000, label: 'Logo (Dark)', category: 'logo' },
+    { id: 'asset-2', url: '#', filename: 'logo-light.svg', fileType: 'image/svg+xml', size: 15000, label: 'Logo (Light)', category: 'logo' },
+    { id: 'asset-3', url: '#', filename: 'product-screenshot-1.png', fileType: 'image/png', size: 850000, label: 'Dashboard Screenshot', category: 'product' },
+    { id: 'asset-4', url: '#', filename: 'ceo-headshot.jpg', fileType: 'image/jpeg', size: 1200000, label: 'CEO Headshot', category: 'executive' },
 ];
