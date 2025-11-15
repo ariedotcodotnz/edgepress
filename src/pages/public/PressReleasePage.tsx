@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Copy, Download } from 'lucide-react';
@@ -11,9 +11,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect } from 'react';
 export function PressReleasePage() {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
+  const isPreview = searchParams.get('preview') === 'true';
   const { data: release, isLoading, error } = useQuery<PressRelease>({
-    queryKey: ['pressRelease', slug],
-    queryFn: () => api(`/api/press-releases/slug/${slug}`),
+    queryKey: ['pressRelease', slug, isPreview],
+    queryFn: () => api(`/api/press-releases/slug/${slug}${isPreview ? '?preview=true' : ''}`),
     enabled: !!slug,
   });
   const trackViewMutation = useMutation({
@@ -24,14 +26,27 @@ export function PressReleasePage() {
       }),
     onError: (error) => console.error("Failed to track page view:", error),
   });
+  const trackDownloadMutation = useMutation({
+    mutationFn: (data: { pressReleaseId: string; assetId: string }) =>
+      api('/api/analytics/track', {
+        method: 'POST',
+        body: JSON.stringify({ type: 'download', ...data }),
+      }),
+    onError: (error) => console.error("Failed to track download:", error),
+  });
   useEffect(() => {
-    if (release?.id) {
+    if (release?.id && !isPreview) {
       trackViewMutation.mutate(release.id);
     }
-  }, [release?.id, trackViewMutation]);
+  }, [release?.id, isPreview, trackViewMutation]);
   const copyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
+    navigator.clipboard.writeText(window.location.href.split('?')[0]);
     toast.success('Link copied to clipboard!');
+  };
+  const handleDownload = (assetId: string) => {
+    if (release?.id && !isPreview) {
+      trackDownloadMutation.mutate({ pressReleaseId: release.id, assetId });
+    }
   };
   if (isLoading) {
     return (
@@ -62,6 +77,11 @@ export function PressReleasePage() {
   }
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      {isPreview && (
+        <div className="bg-brutal-yellow text-foreground text-center p-2 font-mono font-bold">
+          PREVIEW MODE
+        </div>
+      )}
       <Toaster />
       <div className="py-16 md:py-24">
         <Link
@@ -102,7 +122,7 @@ export function PressReleasePage() {
               <h3 className="font-mono uppercase font-bold text-lg">Downloads</h3>
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {release.attachments.map(asset => (
-                  <a key={asset.id} href={asset.url} download className="group flex items-center justify-between p-4 border-2 border-foreground hover:bg-brutal-yellow transition-colors">
+                  <a key={asset.id} href={asset.url} download onClick={() => handleDownload(asset.id)} className="group flex items-center justify-between p-4 border-2 border-foreground hover:bg-brutal-yellow transition-colors">
                     <div>
                       <p className="font-bold">{asset.label}</p>
                       <p className="text-sm text-foreground/70">{asset.filename}</p>

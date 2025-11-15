@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import type { Env } from './core-utils';
 import { PressReleaseEntity, StaticPageEntity, AdminUserEntity, ContactSubmissionEntity, AnalyticsEventEntity, PRContactEntity, MediaAssetEntity } from "./entities";
 import { ok, bad, notFound } from './core-utils';
-import type { PressRelease, StaticPage, AdminUser, ContactSubmission, AnalyticsEvent, AnalyticsSummary, PressReleaseWithViews, PRContact, MediaAsset } from "@shared/types";
+import type { PressRelease, StaticPage, AdminUser, ContactSubmission, AnalyticsEvent, AnalyticsSummary, PressReleaseWithViews, PRContact, MediaAsset, PressReleaseAnalyticsData } from "@shared/types";
 import { formatISO, subDays, eachDayOfInterval, format } from "date-fns";
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
   // PRESS RELEASES
@@ -24,8 +24,14 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   });
   app.get('/api/press-releases/slug/:slug', async (c) => {
     const slug = c.req.param('slug');
+    const isPreview = c.req.query('preview') === 'true';
     const { items } = await PressReleaseEntity.list(c.env);
-    const release = items.find(pr => pr.slug === slug && pr.status === 'Published' && new Date(pr.publishAt) <= new Date());
+    const release = items.find(pr => {
+        if (pr.slug !== slug) return false;
+        if (isPreview) return true; // In preview mode, return any status
+        // In normal mode, only return published and past posts
+        return pr.status === 'Published' && new Date(pr.publishAt) <= new Date();
+    });
     if (!release) return notFound(c, 'Press release not found');
     return ok(c, release);
   });
@@ -215,14 +221,18 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   });
   // ANALYTICS
   app.post('/api/analytics/track', async (c) => {
-    const body = await c.req.json<{ type: 'pageview'; pressReleaseId: string }>();
-    if (body.type !== 'pageview' || !body.pressReleaseId) {
+    const body = await c.req.json<{ type: 'pageview' | 'download'; pressReleaseId: string; assetId?: string }>();
+    if (!body.type || !body.pressReleaseId) {
       return bad(c, 'Invalid tracking event');
+    }
+    if (body.type === 'download' && !body.assetId) {
+      return bad(c, 'assetId is required for download events');
     }
     const newEvent: AnalyticsEvent = {
       id: crypto.randomUUID(),
-      type: 'pageview',
+      type: body.type,
       pressReleaseId: body.pressReleaseId,
+      assetId: body.assetId,
       timestamp: formatISO(new Date()),
     };
     await AnalyticsEventEntity.create(c.env, newEvent);
@@ -234,11 +244,11 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const now = new Date();
     const sevenDaysAgo = subDays(now, 7);
     const thirtyDaysAgo = subDays(now, 30);
-    const viewsLast7Days = allEvents.filter(e => new Date(e.timestamp) >= sevenDaysAgo).length;
+    const viewsLast7Days = allEvents.filter(e => e.type === 'pageview' && new Date(e.timestamp) >= sevenDaysAgo).length;
     const dateRange = eachDayOfInterval({ start: thirtyDaysAgo, end: now });
     const viewsByDay = dateRange.map(date => ({
         date: format(date, 'MMM d'),
-        views: allEvents.filter(e => format(new Date(e.timestamp), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')).length
+        views: allEvents.filter(e => e.type === 'pageview' && format(new Date(e.timestamp), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')).length
     }));
     const summary: AnalyticsSummary = {
       total: allReleases.length,
@@ -254,7 +264,9 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const { items: allReleases } = await PressReleaseEntity.list(c.env);
     const { items: allEvents } = await AnalyticsEventEntity.list(c.env);
     const viewCounts = allEvents.reduce((acc, event) => {
-        acc[event.pressReleaseId] = (acc[event.pressReleaseId] || 0) + 1;
+        if (event.type === 'pageview') {
+            acc[event.pressReleaseId] = (acc[event.pressReleaseId] || 0) + 1;
+        }
         return acc;
     }, {} as Record<string, number>);
     const releasesWithViews: PressReleaseWithViews[] = allReleases.map(pr => ({
@@ -263,5 +275,34 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     }));
     releasesWithViews.sort((a, b) => b.views - a.views);
     return ok(c, releasesWithViews);
+  });
+  app.get('/api/analytics/press-release/:id', async (c) => {
+    const id = c.req.param('id');
+    const releaseEntity = new PressReleaseEntity(c.env, id);
+    if (!await releaseEntity.exists()) return notFound(c, 'Press release not found');
+    const release = await releaseEntity.getState();
+    const { items: allEvents } = await AnalyticsEventEntity.list(c.env);
+    const relevantEvents = allEvents.filter(e => e.pressReleaseId === id);
+    const now = new Date();
+    const sevenDaysAgo = subDays(now, 7);
+    const totalViews = relevantEvents.filter(e => e.type === 'pageview').length;
+    const viewsLast7Days = relevantEvents.filter(e => e.type === 'pageview' && new Date(e.timestamp) >= sevenDaysAgo).length;
+    const downloadCounts = relevantEvents.reduce((acc, event) => {
+        if (event.type === 'download' && event.assetId) {
+            acc[event.assetId] = (acc[event.assetId] || 0) + 1;
+        }
+        return acc;
+    }, {} as Record<string, number>);
+    const analyticsData: PressReleaseAnalyticsData = {
+        totalViews,
+        viewsLast7Days,
+        attachmentDownloads: release.attachments.map(asset => ({
+            assetId: asset.id,
+            label: asset.label,
+            filename: asset.filename,
+            downloads: downloadCounts[asset.id] || 0,
+        })),
+    };
+    return ok(c, analyticsData);
   });
 }

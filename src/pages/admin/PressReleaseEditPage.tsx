@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams, useNavigate, Link } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api-client"
 import type { PressRelease, PRContact, MediaAsset } from "@shared/types"
@@ -15,14 +15,15 @@ import TiptapEditor from "@/components/admin/TiptapEditor"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon, Copy, Mail, PlusCircle, Trash2, Paperclip } from "lucide-react"
+import { CalendarIcon, Copy, Mail, PlusCircle, Trash2, Paperclip, Eye } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
+import { PressReleaseAnalytics } from "@/components/admin/PressReleaseAnalytics"
 const pressReleaseSchema = z.object({
   title: z.string().min(1, "Title is required"),
   slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"),
@@ -149,21 +150,30 @@ export function PressReleaseEditPage() {
     setValue('attachments', currentAttachments.filter(a => a.id !== assetId), { shouldValidate: true });
   };
   const attachments = watch('attachments');
+  const slug = watch('slug');
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-lg font-semibold md:text-2xl">{isEditing ? 'Edit' : 'Create'} Press Release</h1>
         <div className="flex gap-2">
           <Button type="button" variant="outline" onClick={() => navigate('/admin/media/press-releases')}>Cancel</Button>
+          {isEditing && slug && (
+            <Button asChild variant="outline" size="icon">
+              <Link to={`/press/${slug}?preview=true`} target="_blank" title="Preview">
+                <Eye className="h-4 w-4" />
+              </Link>
+            </Button>
+          )}
           <Button type="submit" disabled={mutation.isPending}>
             {mutation.isPending ? 'Saving...' : 'Save Release'}
           </Button>
         </div>
       </div>
       <Tabs defaultValue="content">
-        <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
-          <TabsTrigger value="content">Content Editor</TabsTrigger>
-          <TabsTrigger value="email" disabled={!isEditing}>Email Generation</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 md:w-[600px]">
+          <TabsTrigger value="content">Content</TabsTrigger>
+          <TabsTrigger value="email" disabled={!isEditing}>Email</TabsTrigger>
+          <TabsTrigger value="analytics" disabled={!isEditing}>Analytics</TabsTrigger>
         </TabsList>
         <TabsContent value="content">
           <div className="grid gap-4 md:grid-cols-[1fr_280px] lg:gap-8 mt-4">
@@ -222,6 +232,9 @@ export function PressReleaseEditPage() {
               {generatedEmail && (<div className="space-y-4"><div><Label htmlFor="subject">Subject</Label><div className="relative"><Input id="subject" readOnly value={generatedEmail.subject} className="pr-10" /><Button type="button" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-7 w-7" onClick={() => copyToClipboard(generatedEmail.subject, 'Subject')}><Copy className="h-4 w-4" /></Button></div></div><div><Label>HTML Body</Label><div className="relative"><div className="h-48 overflow-y-auto rounded-md border p-4 prose prose-sm" dangerouslySetInnerHTML={{ __html: generatedEmail.htmlBody }} /><Button type="button" size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7" onClick={() => copyToClipboard(generatedEmail.htmlBody, 'HTML Body')}><Copy className="h-4 w-4" /></Button></div></div><div><Label htmlFor="plainText">Plain Text Body</Label><div className="relative"><Textarea id="plainText" readOnly value={generatedEmail.plainTextBody} rows={10} className="pr-10" /><Button type="button" size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7" onClick={() => copyToClipboard(generatedEmail.plainTextBody, 'Plain Text Body')}><Copy className="h-4 w-4" /></Button></div></div></div>)}
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="analytics">
+          {id ? <PressReleaseAnalytics pressReleaseId={id} /> : <p className="mt-4 text-muted-foreground">Save the release to view analytics.</p>}
         </TabsContent>
       </Tabs>
       <Dialog open={isAssetDialogOpen} onOpenChange={setAssetDialogOpen}>

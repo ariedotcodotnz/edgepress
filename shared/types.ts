@@ -61,8 +61,9 @@ export interface PRContact {
 }
 export interface AnalyticsEvent {
     id: string;
-    type: 'pageview';
+    type: 'pageview' | 'download';
     pressReleaseId: string;
+    assetId?: string;
     timestamp: string; // ISO 8601
 }
 export interface AnalyticsSummary {
@@ -75,4 +76,14 @@ export interface AnalyticsSummary {
 }
 export interface PressReleaseWithViews extends PressRelease {
     views: number;
+}
+export interface PressReleaseAnalyticsData {
+    totalViews: number;
+    viewsLast7Days: number;
+    attachmentDownloads: {
+        assetId: string;
+        label: string;
+        filename: string;
+        downloads: number;
+    }[];
 }
